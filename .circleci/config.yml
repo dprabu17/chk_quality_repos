@@ -7,7 +7,10 @@ orbs:
 jobs:
   build:
     docker:
-      - image: cimg/ruby:2.7-node
+      - image: circleci/ruby:2.7.1
+        environment:
+          BUNDLER_VERSION: 2.1.4
+    executor: ruby/default
     steps:
       - checkout
       - ruby/install-deps
@@ -16,19 +19,22 @@ jobs:
           pkg-manager: yarn
           cache-key: "yarn.lock"
   test:
-    parallelism: 3
+    parallelism: 4
     docker:
-      - image: cimg/ruby:2.7-node
+      - image: circleci/ruby:2.7.1
+        environment:
+          BUNDLER_VERSION: 2.1.4
+          PGHOST: 127.0.0.1
       - image: circleci/postgres:9.5-alpine
         environment:
-          POSTGRES_USER: circleci-demo-ruby
+          POSTGRES_USER: postgres
           POSTGRES_DB: rails_blog_test
           POSTGRES_PASSWORD: ""
     environment:
       BUNDLE_JOBS: "3"
       BUNDLE_RETRY: "3"
       PGHOST: 127.0.0.1
-      PGUSER: circleci-demo-ruby
+      PGUSER: postgres
       PGPASSWORD: ""
       RAILS_ENV: test
     steps:
@@ -40,9 +46,6 @@ jobs:
       - run:
           name: Wait for DB
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
-      - run:
-          name: Bundler
-          command: gem install bundler
       - run:
           name: Database setup
           command: bundle exec rails db:schema:load --trace      
