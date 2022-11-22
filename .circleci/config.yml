@@ -3,59 +3,62 @@
 version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
+orbs:
+  ruby: circleci/ruby@2.6.0
+  node: circleci/node@18.11.9
 jobs:
   build:
     docker:
-      - image: cimg/ruby:3.1.0
+      - image: cimg/ruby:2.6.0-node
     executor: ruby/default
     working_directory: ~/chk_quality_repos
     steps:
       - checkout
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "Gemfile.lock" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-      - run: sudo apt-get install ruby-full cmake
+      - ruby/install-deps
+      # Store bundle cache
+      - node/install-packages:
+          pkg-manager: yarn
+          cache-key: "yarn.lock"
+
+  test:
+    parallelism: 3
+    docker:
+      - image: cimg/ruby:2.6.0-node
+      - image: circleci/postgres:9.5-alpine
+        environment:
+          POSTGRES_USER: circleci-demo-ruby
+          POSTGRES_DB: chk_quality_repos_test
+          POSTGRES_PASSWORD: ""
+    environment:
+      BUNDLE_JOBS: "3"
+      BUNDLE_RETRY: "3"
+      PGHOST: 127.0.0.1
+      PGUSER: chk_quality_repos
+      PGPASSWORD: ""
+      RAILS_ENV: test
+    steps:
+      - checkout
+      - ruby/install-deps
+      - node/install-packages:
+          pkg-manager: yarn
+          cache-key: "yarn.lock"
       - run:
-          name: install dependencies
-          command: |
-            bundle install --jobs=4 --retry=3 --path vendor/bundle
-
-      # - run:
-      #     name: Install Code Climate Test Reporter
-      #     command: |
-      #       curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-      #       chmod +x ./cc-test-reporter
-
-      - save_cache:
-          paths:
-            - ./vendor/bundle
-          key: v1-dependencies-{{ checksum "Gemfile.lock" }}
-      # Database setup
-      # - run: bundle exec rake db:create
-      # - run: bundle exec rake db:schema:load
+          name: Wait for DB
+          command: dockerize -wait tcp://localhost:5432 -timeout 1m
       - run:
-          name: rubocop
-          command: |
-            bundle exec rubocop
-      - run:
-          name: run tests
-          command: |
-            mkdir /tmp/test-results
-            TEST_FILES="$(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)"
-            
-            bundle exec rspec --format progress \
-                            --format RspecJunitFormatter \
-                            --out /tmp/test-results/rspec.xml \
-                            --format progress \
-                            $TEST_FILES
+          name: Database setup
+          command: bundle exec rails db:schema:load --trace
+      # Run rspec in parallel
+      - ruby/rspec-test
+      - ruby/rubocop-check
 
-      # collect reports
-      - store_test_results:
-          path: /tmp/test-results
-      - store_artifacts:
-          path: /tmp/test-results
-          destination: test-results
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
 
+      
