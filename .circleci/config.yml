@@ -39,10 +39,7 @@ jobs:
           command: sudo apt-get update && sudo apt-get -y install imagemagick postgresql-client
       - run:
           name: install bundler
-          command: gem install bundler
-      - run:
-          name: bundle gems
-          command: bundle install --path=vendor/bundle --jobs=4 --retry=3
+          command: gem install bundler      
       # So that we can compile assets, since we use node & yarn
       - run:
           name: Yarn Install
