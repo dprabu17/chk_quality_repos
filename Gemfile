@@ -35,6 +35,7 @@ group :development, :test do
   gem 'factory_bot_rails'
   gem 'simplecov'
   gem 'rubocop'
+  gem 'rspec_junit_formatter'
 end
 
 group :development do
