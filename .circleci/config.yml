@@ -11,7 +11,7 @@ jobs:
       COVERAGE: true
       TZ: /usr/share/zoneinfo/America/Chicago
     docker:
-      - image: circleci/ruby:2.6.0-stretch-node
+      - image: circleci/ruby:2.6.0-node-browsers
         environment:
           PGHOST: 127.0.0.1
           PGUSER: root
@@ -41,12 +41,12 @@ jobs:
       - run:
           name: install bundler
           command: gem install bundler
-      - run: bundle install
-      - run: bundle exec rails webpacker:install      
+      - run: bundle install            
       # So that we can compile assets, since we use node & yarn
       - run:
           name: Yarn Install
           command: yarn install --cache-folder ~/.cache/yarn --ignore-engines
+      - run: bundle exec rake webpacker:compile
       - run: bundle exec rake assets:precompile
       - run:
           name: Install Code Climate Test Reporter
@@ -64,6 +64,7 @@ jobs:
             - public/assets
             - tmp/cache/assets/sprockets
             - ~/.cache/yarn
+            - public/packs-test
       - run:
           name: Setup Database
           command: |
@@ -96,7 +97,7 @@ jobs:
 
   upload-coverage:
     docker:
-      - image: circleci/ruby:2.6.0-stretch-node
+      - image: circleci/ruby:2.6.0-node-browsers
     environment:
       CC_TEST_REPORTER_ID: 2b457deb9aad3305309295c9d6002222e79f35d2fa51918d90bafc9c101b114c
     working_directory: ~/chk_quality_repos
