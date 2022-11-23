@@ -43,7 +43,7 @@ jobs:
       # So that we can compile assets, since we use node & yarn
       - run:
           name: Yarn Install
-          command: yarn install --cache-folder ~/.cache/yarn
+          command: yarn install --cache-folder ~/.cache/yarn --ignore-engines
       - run: bundle exec rake assets:precompile
       - run:
           name: Install Code Climate Test Reporter
