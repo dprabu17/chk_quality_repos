@@ -4,14 +4,16 @@ executors:
   default:
     working_directory: ~/chk_quality_repos
     docker:
-      - image: circleci/ruby:2.6.0
+      - image: circleci/ruby:2.6.0-node-browsers
         environment:
           BUNDLE_JOBS: 3
           BUNDLE_PATH: vendor/bundle
           BUNDLE_RETRY: 3
           BUNDLER_VERSION: 2.0.1
           RAILS_ENV: test
+          RACK_ENV: test
           NODE_ENV: test
+          COVERAGE: true
           DB_HOST: 127.0.0.1
           PG_HOST: 127.0.0.1
           PGUSER: postgres
@@ -19,6 +21,7 @@ executors:
         environment:
           POSTGRES_DB: chk_quality_repos_test
           POSTGRES_USER: postgres
+      - image: redis:4.0.9
 
 commands:
   configure_bundler:
