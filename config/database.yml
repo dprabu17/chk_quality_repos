@@ -1,0 +1,25 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  # For details on connection pooling, see Rails configuration guide
+  # https://guides.rubyonrails.org/configuring.html#database-pooling
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: localhost
+
+development:
+  <<: *default
+  database: chk_codeclimate_repos_development
+  username: postgres
+  password: postgres
+
+test:
+  <<: *default
+  database: chk_quality_repos_test
+  username: postgres
+  password: postgres
+
+production:
+  <<: *default
+  database: chk_quality_repos_production
+  username: chk_quality_repos
+  password: <%= ENV['CHK_QUALITY_REPOS_DATABASE_PASSWORD'] %>
