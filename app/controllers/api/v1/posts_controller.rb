@@ -15,6 +15,11 @@ class Api::V1::PostsController < ApplicationController
 
   def create
     post = Post.new(title: post_params[:title], description: post_params[:description])
+    if post.save
+      render json: post, status: 200
+    else
+      render json: {error: "Not Created."}
+    end
   end
 
   private
